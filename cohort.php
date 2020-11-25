@@ -7,17 +7,18 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 $viewId = '227751717';
-$daysBack = 12;
 
 $credentials = __DIR__ . '/credentials.json';
 
 $analytics = initializeAnalytics($credentials);
-$response = cohortRequest($analytics,$viewId,$daysBack);
 
+$response = cohortRequest($analytics,$viewId,0);
+$responsePreviousPeriod = cohortRequest($analytics,$viewId,4);
 
 $formatted = formatResults($response);
+$formattedPreviousPeriod = formatResults($responsePreviousPeriod);
 
-echo json_encode(formatGeckoboard($formatted));die();
+echo json_encode(formatGeckoboard($formatted,$formattedPreviousPeriod));die();
 
 
 /**
@@ -37,7 +38,7 @@ function initializeAnalytics($credentials)
   return $analytics;
 }
 
-function cohortRequest(&$analyticsreporting,$viewId,$daysBack) {
+function cohortRequest(&$analyticsreporting,$viewId,$weeksBack) {
     // Create the ReportRequest object.
     $request = new Google_Service_AnalyticsReporting_ReportRequest();
     $request->setViewId($viewId);
@@ -46,7 +47,7 @@ function cohortRequest(&$analyticsreporting,$viewId,$daysBack) {
     $cohortDimension->setName("ga:cohort");
 
     $cohortNthWeekDimension = new Google_Service_AnalyticsReporting_Dimension();
-    $cohortNthWeekDimension->setName("ga:cohortNthDay");
+    $cohortNthWeekDimension->setName("ga:cohortNthWeek");
 
     // Set the cohort dimensions
     $request->setDimensions(array($cohortDimension, $cohortNthWeekDimension));
@@ -59,14 +60,16 @@ function cohortRequest(&$analyticsreporting,$viewId,$daysBack) {
 
     // Create cohorts
     $cohorts = [];
-    $i = 0;
-    while($i < $daysBack) {
-      $date = date('Y-m-d', strtotime("-${i} day -2"));
+    $i = 1;
+    while($i <= 3) {
+      $weeksBack = $weeksBack + $i;
+      $dateStart = date('Y-m-d', strtotime("-${weeksBack} week last sunday"));
+      $dateEnd = date('Y-m-d', strtotime("-${weeksBack} week next saturday"));
       $dateRange = new Google_Service_AnalyticsReporting_DateRange();
-      $dateRange->setStartDate($date);
-      $dateRange->setEndDate($date);
+      $dateRange->setStartDate($dateStart);
+      $dateRange->setEndDate($dateEnd);
       $cohort = new Google_Service_AnalyticsReporting_Cohort();
-      $cohort->setName($date);
+      $cohort->setName($dateStart . '-' . $dateEnd);
       $cohort->setType("FIRST_VISIT_DATE");
       $cohort->setDateRange($dateRange);
       $cohorts[] = $cohort;
@@ -134,12 +137,16 @@ function formatResults($reports) {
  *
  * @param An Analytics Reporting API V4 response.
  */
-function formatGeckoboard($formattedResults) {
+function formatGeckoboard($formattedResults,$formattedResultsPreviousPeriod) {
   $xaxis = [];
   $values = [];
-  foreach($formattedResults['averages'] as $key => $value) {
-    $xaxis[] = 'Day ' . $key;
-    $values[] = $value;
+  $valuesPreviousPeriod = [];
+  $i = 0;
+  while($i < count($formattedResults['averages'])) {
+    $xaxis[] = 'Week ' . ($i+1);
+    $values[] = $formattedResults['averages'][$i];
+    $valuesPreviousPeriod[] = $formattedResultsPreviousPeriod['averages'][$i];
+    $i++;
   }
   return [
     'x_axis' => [
@@ -148,7 +155,12 @@ function formatGeckoboard($formattedResults) {
     ],
     'series' => [
       [
+      	'name' => 'This month',
         'data' => $values
+      ],
+	  [
+      	'name' => 'Last month',
+        'data' => $valuesPreviousPeriod
       ]
     ]
   ];
