@@ -61,7 +61,7 @@ function cohortRequest(&$analyticsreporting,$viewId,$weeksBack) {
     // Create cohorts
     $cohorts = [];
     $i = 1;
-    while($i <= 3) {
+    while($i <= 4) {
       $weeksBack = $weeksBack + $i;
       $dateStart = date('Y-m-d', strtotime("-${weeksBack} week last sunday"));
       $dateEnd = date('Y-m-d', strtotime("-${weeksBack} week next saturday"));
@@ -143,7 +143,7 @@ function formatGeckoboard($formattedResults,$formattedResultsPreviousPeriod) {
   $valuesPreviousPeriod = [];
   $i = 0;
   while($i < count($formattedResults['averages'])) {
-    $xaxis[] = 'Week ' . ($i+1);
+    $xaxis[] = 'Week ' . $i;
     $values[] = $formattedResults['averages'][$i];
     $valuesPreviousPeriod[] = $formattedResultsPreviousPeriod['averages'][$i];
     $i++;
@@ -153,13 +153,16 @@ function formatGeckoboard($formattedResults,$formattedResultsPreviousPeriod) {
       'labels' => $xaxis,
       'type' => 'standard'
     ],
+    'y_axis' => [
+      'type' => 'percent'
+    ],
     'series' => [
       [
-      	'name' => 'This month',
+      	'type' => 'main',
         'data' => $values
       ],
-	  [
-      	'name' => 'Last month',
+  	  [
+      	'type' => 'secondary',
         'data' => $valuesPreviousPeriod
       ]
     ]
