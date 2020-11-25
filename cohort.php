@@ -6,7 +6,7 @@
 // Load the Google API PHP Client Library.
 require_once __DIR__ . '/vendor/autoload.php';
 
-$viewId = '227751717';
+$viewId = '228244014';
 
 $credentials = __DIR__ . '/credentials.json';
 
