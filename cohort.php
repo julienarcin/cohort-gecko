@@ -143,7 +143,7 @@ function formatGeckoboard($formattedResults,$formattedResultsPreviousPeriod) {
   $valuesPreviousPeriod = [];
   $i = 0;
   while($i < count($formattedResults['averages'])) {
-    $xaxis[] = 'Week ' . $i;
+    $xaxis[] = 'W' . $i;
     $values[] = $formattedResults['averages'][$i] ?? "0.0";
     $valuesPreviousPeriod[] = $formattedResultsPreviousPeriod['averages'][$i] ?? "0.0";
     $i++;
