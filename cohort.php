@@ -12,8 +12,8 @@ $credentials = __DIR__ . '/credentials.json';
 
 $analytics = initializeAnalytics($credentials);
 
-$response = cohortRequest($analytics,$viewId,0);
-$responsePreviousPeriod = cohortRequest($analytics,$viewId,4);
+$response = cohortRequest($analytics,$viewId,1);
+$responsePreviousPeriod = cohortRequest($analytics,$viewId,5);
 
 $formatted = formatResults($response);
 $formattedPreviousPeriod = formatResults($responsePreviousPeriod);
@@ -62,7 +62,6 @@ function cohortRequest(&$analyticsreporting,$viewId,$weeksBack) {
     $cohorts = [];
     $i = 1;
     while($i <= 4) {
-      $weeksBack = $weeksBack + $i;
       $dateStart = date('Y-m-d', strtotime("-${weeksBack} week last sunday"));
       $dateEnd = date('Y-m-d', strtotime("-${weeksBack} week next saturday"));
       $dateRange = new Google_Service_AnalyticsReporting_DateRange();
@@ -73,6 +72,7 @@ function cohortRequest(&$analyticsreporting,$viewId,$weeksBack) {
       $cohort->setType("FIRST_VISIT_DATE");
       $cohort->setDateRange($dateRange);
       $cohorts[] = $cohort;
+      $weeksBack = $weeksBack + 1;
       $i++;
     }
 
@@ -144,8 +144,8 @@ function formatGeckoboard($formattedResults,$formattedResultsPreviousPeriod) {
   $i = 0;
   while($i < count($formattedResults['averages'])) {
     $xaxis[] = 'Week ' . $i;
-    $values[] = $formattedResults['averages'][$i];
-    $valuesPreviousPeriod[] = $formattedResultsPreviousPeriod['averages'][$i];
+    $values[] = $formattedResults['averages'][$i] ?? "0.0";
+    $valuesPreviousPeriod[] = $formattedResultsPreviousPeriod['averages'][$i] ?? "0.0";
     $i++;
   }
   return [
